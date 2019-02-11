@@ -29,7 +29,7 @@ class DeepMotif(nn.Module):
         self.W = nn.Parameter(torch.from_numpy(M).type(torch.FloatTensor))
         self.O = objective
         self.R = reg
-        # Weblogo colorschemes
+        # Weblogo alphabets
         self.n_alph = "AGCT"
         self.aa_alph = "ARNDCGQEHILKMFPSTWYV"
         
