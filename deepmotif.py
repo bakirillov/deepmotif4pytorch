@@ -6,9 +6,7 @@ from copy import deepcopy
 from torch.optim import Adam
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
-from IPython.display import Image
-from matplotlib.lines import Line2D
-from matplotlib.patches import Patch
+from weblogolib.colorscheme import nucleotide, taylor
 
 
 class DeepMotif(nn.Module):
@@ -31,6 +29,9 @@ class DeepMotif(nn.Module):
         self.W = nn.Parameter(torch.from_numpy(M).type(torch.FloatTensor))
         self.O = objective
         self.R = reg
+        # Weblogo colorschemes
+        self.n_alph = "AGCT"
+        self.aa_alph = "ARNDCGQEHILKMFPSTWYV"
         
     def train(self, optimizer, epochs):
         """
@@ -46,14 +47,34 @@ class DeepMotif(nn.Module):
             loss.backward()
             optimizer.step()
         #We can't have negative weights, so abs is needed,
-        self.W.data = torch.clamp(torch.abs(self.W.data), 0, 1)
+        self.W.data = torch.clamp(self.W.data, 0, 1)
         
-    def plot(self):
-        """Plot the motif matrix"""
+    def heatmap(self):
+        """Plot the motif matrix as a heatmap"""
         plt.imshow(self.M)
         plt.yticks([])
         plt.xticks(np.arange(self.size[1]))
         plt.show()
+        
+    def logo(self, out_fn, logo_options=None):
+        """
+        Draw logo.png
+        
+        Parameters:
+            out_fn - name of output file
+            logo options - custom logo options
+        """
+        alphabet = self.n_alph if self.size[0] == 4 else self.aa_alph
+        options = LogoOptions()
+        if logo_options:
+            options = logo_options
+        else:
+            options.title = "DeepMotif logo"
+            options.color_scheme = nucleotide if self.size[0] == 4 else taylor
+        data = LogoData.from_counts(alphabet, self.M.T)
+        frm = LogoFormat(data, options)
+        with open(out_fn, "wb") as oh:
+            oh.write(png_formatter(data, frm))
         
     @classmethod
     def create(cls, size, objective, reg=0.01, epochs=100):
