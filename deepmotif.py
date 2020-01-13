@@ -11,7 +11,7 @@ from weblogolib.colorscheme import nucleotide, taylor
 
 class DeepMotif(nn.Module):
     
-    def __init__(self, size, objective, reg):
+    def __init__(self, size, objective, reg, cuda=False):
         """
         Initialize DeepMotif class
         
@@ -29,6 +29,9 @@ class DeepMotif(nn.Module):
         self.W = nn.Parameter(torch.from_numpy(M).type(torch.FloatTensor))
         self.O = objective
         self.R = reg
+        self.cuda = cuda and torch.cuda.is_available()
+        if self.cuda:
+            self.W = self.W.cuda()
         # Weblogo alphabets
         self.n_alph = "AGCT"
         self.aa_alph = "ARNDCGQEHILKMFPSTWYV"
