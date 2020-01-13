@@ -33,7 +33,7 @@ class DeepMotif(nn.Module):
         self.n_alph = "AGCT"
         self.aa_alph = "ARNDCGQEHILKMFPSTWYV"
         
-    def train(self, optimizer, epochs):
+    def fit(self, optimizer, epochs):
         """
         Run optimization for the best motif weights
         
@@ -41,6 +41,7 @@ class DeepMotif(nn.Module):
             optimizer - optimizer to use
             epochs - number of epochs
         """
+        self.train()
         for a in np.arange(epochs):
             optimizer.zero_grad()
             loss = self.O(self.W) + self.R*(self.W.norm()**2)
@@ -89,7 +90,7 @@ class DeepMotif(nn.Module):
         """
         m = cls(size, objective, reg)
         opt = Adam(m.parameters())
-        m.train(opt, epochs)
+        m.fit(opt, epochs)
         m.M = m.W.cpu().data.numpy()
         # Max-normalization
         maximum = np.max(m.M)
