@@ -26,12 +26,16 @@ class DeepMotif(nn.Module):
         ).reshape(size)
         self.size = size
         # Motif weights
-        self.W = nn.Parameter(torch.from_numpy(M).type(torch.FloatTensor))
+        self.cuda = cuda and torch.cuda.is_available()
+        self.W = nn.Parameter(
+            torch.from_numpy(
+                M
+            ).type(torch.FloatTensor).cuda() if self.cuda else torch.from_numpy(
+                M
+            ).type(torch.FloatTensor)
+        )
         self.O = objective
         self.R = reg
-        self.cuda = cuda and torch.cuda.is_available()
-        if self.cuda:
-            self.W = self.W.cuda()
         # Weblogo alphabets
         self.n_alph = "AGCT"
         self.aa_alph = "ARNDCGQEHILKMFPSTWYV"
@@ -44,10 +48,10 @@ class DeepMotif(nn.Module):
             optimizer - optimizer to use
             epochs - number of epochs
         """
-        self.train()
         for a in np.arange(epochs):
             optimizer.zero_grad()
             loss = self.O(self.W) + self.R*(self.W.norm()**2)
+            loss = loss.cuda() if self.cuda else loss
             loss.backward()
             optimizer.step()
         #We can't have negative weights, so abs is needed,
@@ -81,7 +85,7 @@ class DeepMotif(nn.Module):
             oh.write(png_formatter(data, frm))
         
     @classmethod
-    def create(cls, size, objective, reg=0.01, epochs=100):
+    def create(cls, size, objective, reg=0.01, epochs=100, cuda=False):
         """
         Create and find the motif
         
@@ -91,7 +95,8 @@ class DeepMotif(nn.Module):
             reg - regularization parameter
             epochs - number of epochs
         """
-        m = cls(size, objective, reg)
+        m = cls(size, objective, reg, cuda)
+        m.train()
         opt = Adam(m.parameters())
         m.fit(opt, epochs)
         m.M = m.W.cpu().data.numpy()
